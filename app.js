@@ -1,7 +1,7 @@
-const MAP_WIDTH = 700;
-const MAP_HEIGHT = 500;
-const FIELDS_IN_ROW = 38;
-const FIELDS_IN_COLUMN = 25;
+const MAP_WIDTH = 1300;
+const MAP_HEIGHT = 790;
+const FIELDS_IN_COLUMN = 76;
+const FIELDS_IN_ROW =  Math.floor(76*9/16);
 
 //change names rows are actually columns
 
@@ -91,6 +91,7 @@ class Room{
 		this.id = `room-${roomCount}`;
 		this.maxPlayers = maxPlayers;
 		this.map = new Map();
+		this.colliderChecker = new ColliiderChecker();
 		roomCount += 1;
 
 		this.foodManager.createFood();
@@ -116,12 +117,54 @@ class Room{
 
 	update(){
 		for(let player in this.players){
-			this.players[player].update();
-			this.foodManager.checkForEats(this.players[player]);
+			if(this.players[player].alive){
+				this.players[player].update();
+				this.foodManager.checkForEats(this.players[player]);
+				this.colliderChecker.checkCollisions(player, this.players)
+			}
 		}
 	}
 
 
+
+}
+
+class ColliiderChecker{
+	checkCollisions(collider, players){
+		for(let player in players){
+			this.checkCollisionWithPlayer(players[collider], players[player]);
+		}
+	}
+
+	checkCollisionWithPlayer(collider, checked){
+		if(!checked.alive){
+			return false;
+		}
+		this.checkCollisionWithHead(collider, checked)
+		this.checkCollisionWithTail(collider, checked);
+	}
+
+	checkCollisionWithHead(collider, checked){
+		if(collider.id == checked.id){
+			return false;	//own head
+		}
+		let colliderHead = collider.tail.head;
+		let checkedHead = checked.tail.head;
+		if(colliderHead.position.x == checkedHead.position.x && colliderHead.position.y == checkedHead.position.y){
+			collider.handleDeath();//i could also add death for checked 
+		}
+	}
+
+	checkCollisionWithTail(collider, checked){
+		let colliderHead = collider.tail.head;
+		let checkedTail = checked.tail.tailElements.elements;
+		for(let i = 0; i < checkedTail.length; i+=1){
+			if(colliderHead.position.x == checkedTail[i].position.x && colliderHead.position.y == checkedTail[i].position.y){
+				collider.handleDeath();
+			}
+		}
+
+	}
 }
 
 class FoodManager{
@@ -139,9 +182,6 @@ class FoodManager{
 		}
 	}
 
-	update(player){		
-	}
-
 	createFood(){
 		this.food[`f-${foodCount}`] = new Food();
 	}
@@ -150,7 +190,7 @@ class FoodManager{
 class Food{
 	constructor(){
 		this.id = `f-${foodCount}`;
-		this.position = new Position(Math.floor(Math.random()*FIELDS_IN_ROW), Math.floor(Math.random()*FIELDS_IN_COLUMN));	
+		this.position = new Position(Math.floor(Math.random()*FIELDS_IN_COLUMN), Math.floor(Math.random()*FIELDS_IN_ROW));	
 		foodCount += 1;
 	}
 
@@ -215,7 +255,7 @@ class Player{
 		this.id = id;
 		this.tail = new Tail(new Position(4,6));;
 		this.movement = new Movement();
-
+		this.alive = true;
 	}
 
 	findRoom(game){
@@ -243,7 +283,12 @@ class Player{
 
 
 	handleEat(){
-		this.tail.requestNewElement(this.tail.head.position);
+		this.tail.requestNewElement(this.tail.head.lastPosition);
+	}
+
+	handleDeath(){
+		this.alive = false;
+		console.log('ded');
 	}
 }
 
@@ -374,6 +419,7 @@ class TailElement{
 	constructor(position, tailLength){
 		this.position = position;
 		this.lastPosition = {};
+		if(tailLength>=0)
 		this.index = tailLength;
 	}
 
@@ -396,17 +442,17 @@ class TailHead extends TailElement{
 		updatePositionByVector(vX, vY){
 		this.lastPosition = {...this.position};
 		this.position.changePositionByVector(vX, vY);
-		if(this.position.y > FIELDS_IN_COLUMN-1){
+		if(this.position.y > FIELDS_IN_ROW-1){
 			this.position.y = 0;
 		}
-		if(this.position.x > FIELDS_IN_ROW-1){
+		if(this.position.x > FIELDS_IN_COLUMN-1){
 			this.position.x = 0;
 		}
 		if(this.position.y < 0){
-			this.position.y = FIELDS_IN_COLUMN-1;
+			this.position.y = FIELDS_IN_ROW-1;
 		}
 		if(this.position.x < 0){
-			this.position.x = FIELDS_IN_ROW-1;
+			this.position.x = FIELDS_IN_COLUMN-1;
 		}
 	}
 }
