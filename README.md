@@ -1,4 +1,3 @@
-Multiplayer version of snake [WIP]
+Multiplayer version of snake
 
-1. npm install
-2. node app.js
+live demo: https://nairorox.usermd.net/

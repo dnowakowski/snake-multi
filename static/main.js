@@ -15,7 +15,6 @@ class Map{
 
 	set(data){
 		this.setCanvasWidth();
-		console.log(data.fieldsInColumn);
 		this.fieldsInRow = data.fieldsInRow;
 		this.fieldsInColumn = data.fieldsInColumn;
 		this.fields = data.matrix;
@@ -204,6 +203,7 @@ window.addEventListener('resize', (e) => {
 
 let initDataReceived = false;
 socket.on('newData', (data) => {
+
 	if(!initDataReceived){
 		gameMap.set(data.map);
 		initDataReceived = true;
@@ -212,7 +212,7 @@ socket.on('newData', (data) => {
 	gameMap.draw();
 	player.drawAllPlayers(data.players);
 	if(!data.players[socket.id].alive){
-		console.log('jur ded');
+		//draw gameover/respawn screen
 	}
 	Food.drawAll(data.food);
 

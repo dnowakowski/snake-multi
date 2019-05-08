@@ -3,9 +3,6 @@ const MAP_HEIGHT = 790;
 const FIELDS_IN_COLUMN = 76;
 const FIELDS_IN_ROW =  Math.floor(76*9/16);
 
-//change names rows are actually columns
-
-
 const express = require('express');
 const http = require('http');
 const path = require('path');
@@ -69,7 +66,7 @@ class Game{
 	prepareAndSendDataFor(room){
 		let data = {
 			players:{},
-			map: this.rooms[room].map,
+			map: this.rooms[room].map.publicData,
 			food : this.rooms[room].foodManager.food,
 		};
 		//console.log(data.map.matrix);
@@ -84,7 +81,7 @@ class Game{
 }
 
 class Room{
-	constructor(maxPlayers = 2){
+	constructor(maxPlayers = Infinity){
 		this.players = {};
 		this.foodManager = new FoodManager();
 		this.playerCount = 0;
@@ -94,6 +91,7 @@ class Room{
 		this.colliderChecker = new ColliiderChecker();
 		roomCount += 1;
 
+		this.foodManager.createFood();
 		this.foodManager.createFood();
 	}
 
@@ -212,7 +210,13 @@ class Map{
 		this.fieldsInColumn = FIELDS_IN_COLUMN;
 		this.fieldWidth = (MAP_WIDTH/FIELDS_IN_ROW);
 		this.fieldHeight = (MAP_HEIGHT/FIELDS_IN_COLUMN);
-		this.matrix = this.createGlobalMatrix();
+		this.publicData = {
+			fieldsInRow: FIELDS_IN_ROW,
+			fieldsInColumn: FIELDS_IN_COLUMN,
+			fieldWidth: (MAP_WIDTH/FIELDS_IN_ROW),
+			fieldHeight: (MAP_HEIGHT/FIELDS_IN_COLUMN),
+		}
+		this.matrix = this.createGlobalMatrix();	//useless in current state
 	}
 
 	createGlobalMatrix(){
@@ -288,7 +292,6 @@ class Player{
 
 	handleDeath(){
 		this.alive = false;
-		console.log('ded');
 	}
 }
 
@@ -480,7 +483,6 @@ io.on('connection', (socket) => {
 	});
 })
 
-	//console.log(io.sockets.server.clients().connected)
 setInterval(() => {
 	game.update();
 	game.sendInfoToClients();
